@@ -86,6 +86,11 @@ router.post('/login', async (req, res, next) => {
       permissions[field] = roles.some(r => r[field] === 1);
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error('CRITICAL: JWT_SECRET is missing from environment variables!');
+      return res.status(500).json({ success: false, message: 'Server configuration error: JWT_SECRET is missing. Please add it to Railway Variables.' });
+    }
+
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '24h' });
 
     // Update last login
