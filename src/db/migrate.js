@@ -6,6 +6,7 @@ const mysql = require('mysql2/promise');
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
 async function run() {
+  console.log(`Connecting to database at ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 3306}...`);
   const conn = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
