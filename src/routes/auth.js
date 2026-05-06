@@ -5,6 +5,48 @@ const jwt = require('jsonwebtoken');
 const db = require('../db/connection');
 const { authenticate } = require('../middleware/auth');
 const { logAudit } = require('../utils/audit');
+const { initSocket } = require('../utils/socket');
+
+// TEMP: Setup endpoint to create initial users safely
+router.get('/setup-admin', async (req, res, next) => {
+  try {
+    // 1. Create Roles if they don't exist
+    await db.query(`
+      INSERT IGNORE INTO roles (role_code, role_name, web_admin_access, web_settings_access, mobile_access, is_active)
+      VALUES 
+        ('SYS_ADMIN', 'System Administrator', 1, 1, 1, 1),
+        ('PRODUCTION_STAFF', 'Production Staff', 0, 0, 1, 1)
+    `);
+
+    // 2. Create Admin User
+    const adminHash = await bcrypt.hash('password123', 10);
+    const [adminResult] = await db.query(
+      'INSERT IGNORE INTO users (email, password_hash, full_name, department, is_first_login) VALUES (?, ?, ?, ?, ?)',
+      ['admin@example.com', adminHash, 'System Admin', 'IT', 0]
+    );
+
+    // 3. Create Staff User
+    const staffHash = await bcrypt.hash('staff123', 10);
+    const [staffResult] = await db.query(
+      'INSERT IGNORE INTO users (email, password_hash, full_name, department, is_first_login) VALUES (?, ?, ?, ?, ?)',
+      ['staff@example.com', staffHash, 'Production Staff', 'Production', 0]
+    );
+
+    // 4. Link Roles
+    await db.query(`
+      INSERT IGNORE INTO user_roles (user_id, role_id)
+      SELECT u.id, r.id FROM users u, roles r 
+      WHERE u.email = 'admin@example.com' AND r.role_code = 'SYS_ADMIN'
+    `);
+    await db.query(`
+      INSERT IGNORE INTO user_roles (user_id, role_id)
+      SELECT u.id, r.id FROM users u, roles r 
+      WHERE u.email = 'staff@example.com' AND r.role_code = 'PRODUCTION_STAFF'
+    `);
+
+    res.json({ success: true, message: 'Admin and Staff users created successfully. You can now login with password123 and staff123.' });
+  } catch (err) { next(err); }
+});
 
 // POST /api/v1/auth/login
 // Used by: Mobile App (index.html) + Web Admin + Web Settings
