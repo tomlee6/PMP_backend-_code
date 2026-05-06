@@ -10,14 +10,15 @@ const { initSocket } = require('../utils/socket');
 // TEMP: Setup endpoint to create initial users safely
 router.get('/setup-admin', async (req, res, next) => {
   try {
+    await db.query(`DROP TABLE IF EXISTS audit_log`);
     await db.query(`
-      CREATE TABLE IF NOT EXISTS audit_log (
+      CREATE TABLE audit_log (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT,
         action VARCHAR(100),
         module VARCHAR(100),
-        target_table VARCHAR(100),
-        target_id INT,
+        entity_type VARCHAR(100),
+        entity_id INT,
         old_values JSON,
         new_values JSON,
         ip_address VARCHAR(45),
