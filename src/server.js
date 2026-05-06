@@ -22,6 +22,9 @@ const { initSocket } = require('./utils/socket');
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+console.log('--- STARTING AMPHENOL API ---');
+console.log(`Port: ${PORT}`);
+console.log(`Environment: ${process.env.NODE_ENV}`);
 
 // Initialize Socket.IO
 initSocket(server);
