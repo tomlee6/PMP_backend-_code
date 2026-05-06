@@ -10,6 +10,21 @@ const { initSocket } = require('../utils/socket');
 // TEMP: Setup endpoint to create initial users safely
 router.get('/setup-admin', async (req, res, next) => {
   try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        action VARCHAR(100),
+        module VARCHAR(100),
+        target_table VARCHAR(100),
+        target_id INT,
+        old_values JSON,
+        new_values JSON,
+        ip_address VARCHAR(45),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
     // 1. Create Roles if they don't exist
     await db.query(`
       INSERT IGNORE INTO roles (role_code, role_name, web_admin_access, web_settings_access, mobile_access, is_active)
